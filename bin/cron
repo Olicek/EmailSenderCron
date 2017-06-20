@@ -18,7 +18,7 @@ if (!class_exists('PHPStan\Command\AnalyseCommand', true)) {
 $application = new Symfony\Component\Console\Application();
 
 // Register all Commands
-$application->add(new TestCommand());
+$application->add(new \Oli\EmailSender\Cron\Commands\TestCommand());
 
 // Run it
 $application->run();
