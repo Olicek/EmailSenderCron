@@ -26,6 +26,6 @@
     "phpunit/phpunit": "^6.2"
   },
   "bin": [
-    "bin/cron.php"
+    "bin/cron"
   ]
 }
