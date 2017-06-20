@@ -17,7 +17,7 @@
   "require": {
     "php": ">=7.1",
     "phpmailer/phpmailer": "^5.2",
-    "dibi/dibi": "^3.0"
+    "olicek/email-sender-persistence": "@dev"
   },
   "require-dev": {
     "phpstan/phpstan": "^0.6",
