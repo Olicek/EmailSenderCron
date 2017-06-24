@@ -10,7 +10,7 @@ use Oli\EmailSender\Cron\Exceptions\SendException;
  * Copyright (c) 2017 Petr Olišar
  * @package Oli\EmailSender\Cron\Adapters
  */
-class NativeMail
+class NativeMail implements IAdapter
 {
 
 	public function send(IEmail $email): void
