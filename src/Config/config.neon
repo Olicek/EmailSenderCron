@@ -1,0 +1,18 @@
+parameters:
+  database:
+    driver: pdo
+    dsn: 'mysql:host=localhost;dbname=cron_mailer;charset=utf8'
+    username: root
+    password: root
+  mailerSettings:
+    charset: 'UTF-8'
+    useSMTP: off
+
+services:
+  - Dibi\Connection(%database%)
+  - Oli\EmailSender\Persistence\Adapters\DibiAdapter
+  - Oli\EmailSender\Cron\Commands\SendEmailsApplication
+  - Oli\EmailSender\Persistence\PersistEmail
+  - Oli\EmailSender\Cron\Adapters\PHPMailer
+  - Oli\EmailSender\Cron\Mailer
+  - Oli\EmailSender\Cron\Config\MailerSettings(%mailerSettings%)

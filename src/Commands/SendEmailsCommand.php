@@ -2,14 +2,14 @@
 
 namespace Oli\EmailSender\Cron\Commands;
 
-use Oli\EmailSender\Cron\IMailer;
-use Oli\EmailSender\Persistence\IPersistEmail;
+use Nette\Configurator;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Class TestCommand
@@ -20,29 +20,13 @@ final class SendEmailsCommand extends Command
 {
 
 	/**
-	 * @var IMailer
-	 */
-	private $mailer;
-
-	/**
-	 * @var IPersistEmail
-	 */
-	private $persistEmail;
-
-	public function __construct(IMailer $mailer, IPersistEmail $persistEmail, $name = null)
-	{
-		parent::__construct($name);
-		$this->mailer = $mailer;
-		$this->persistEmail = $persistEmail;
-	}
-
-	/**
 	 * In this method setup command, description and its parameters
 	 */
 	protected function configure()
 	{
 		$this->setName('emails:send');
 		$this->setDescription('Sends emails.');
+		$this->addOption('configuration', 'c', InputOption::VALUE_REQUIRED, 'Path to project configuration file');
 		$this->addArgument('number', InputArgument::OPTIONAL, 'Number of emails to send.');
 	}
 
@@ -52,24 +36,72 @@ final class SendEmailsCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|null
 	 * @throws InvalidArgumentException
+	 * @throws \Nette\DI\MissingServiceException
+	 * @throws \Nette\InvalidArgumentException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		$number = $input->getArgument('number');
+		$projectConfigFile = $input->getOption('configuration');
 
-		$output->writeln(sprintf('Start sending'));
-		$emails = $this->persistEmail->loadEmails($number);
-		$progress = new ProgressBar($output, count($emails));
+		$io = new SymfonyStyle($input, $output);
+		$io->title('Cron mailer');
 
-		$progress->display();
-		foreach ($emails as $email)
+		$rootDir = __DIR__ . '/../..';
+		$tmpDir = $rootDir . '/temp';
+		$confDir = $rootDir . '/src/Config';
+
+		$configurator = new Configurator();
+		$configurator->defaultExtensions = [];
+		$configurator->setDebugMode(true);
+		$configurator->setTempDirectory($tmpDir);
+
+		$configFiles = [$confDir . '/config.neon'];
+
+		if($projectConfigFile !== null)
 		{
-			$this->mailer->send($email);
-			$progress->advance();
+			if(!is_file($projectConfigFile))
+			{
+				$output->writeln(sprintf('Project config file at path %s does not exist.', $projectConfigFile));
+				return 1;
+			}
+
+			$configFiles[] = $projectConfigFile;
 		}
 
-		$progress->finish();
-		$output->writeln(sprintf('Your emails was sent'));
+		foreach ($configFiles as $configFile)
+		{
+			$configurator->addConfig($configFile);
+		}
+
+		$parameters = [
+			'rootDir' => $rootDir,
+			'tmpDir' => $tmpDir,
+		];
+
+		$configurator->addParameters($parameters);
+		$container = $configurator->createContainer();
+
+		/** @var SendEmailsApplication $sendEmailsApplication */
+		$sendEmailsApplication = $container->getByType(SendEmailsApplication::class);
+		list($successfulEmails, $unsuccessfulEmails) = $sendEmailsApplication->send($number, $io);
+
+		$io->text('Number of successfully sent emails: ' . $successfulEmails);
+		if ($unsuccessfulEmails)
+		{
+			if (!$successfulEmails)
+			{
+				$io->text('Number of unsuccessfully sent emails: ' . $unsuccessfulEmails);
+				$io->warning('None of emails was sent.');
+				return 1;
+			}
+			$io->text('Number of unsuccessfully sent emails: ' . $unsuccessfulEmails);
+			$io->warning('Some emails was sent, but not all of them.');
+		}
+		else
+		{
+			$io->success('Your emails was sent');
+		}
 
 		return 0;
 	}
