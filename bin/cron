@@ -18,6 +18,7 @@ $application = new \Symfony\Component\Console\Application();
 
 // Register all Commands
 $application->add(new \Oli\EmailSender\Cron\Commands\SendEmailsCommand());
+$application->add(new \Oli\EmailSender\Cron\Commands\InstallDatabaseCommand());
 
 // Run it
 $application->run();
