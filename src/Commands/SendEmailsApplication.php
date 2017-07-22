@@ -5,6 +5,8 @@ use Oli\EmailSender\Cron\IMailer;
 use Oli\EmailSender\Persistence\IPersistEmail;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Tracy\Debugger;
+use Tracy\ILogger;
 
 /**
  * Class SendEmailsApplication
@@ -53,6 +55,7 @@ class SendEmailsApplication
 			catch (\Throwable $e)
 			{
 				$unsuccessful++;
+				Debugger::log($e, ILogger::EXCEPTION);
 			}
 			$progress->advance();
 		}

@@ -2,8 +2,8 @@ parameters:
   database:
     driver: pdo
     dsn: 'mysql:host=localhost;dbname=cron_mailer;charset=utf8'
-    username: root
-    password: root
+    username: mailer
+    password: mailer
   mailerSettings:
     charset: 'UTF-8'
     useSMTP: off

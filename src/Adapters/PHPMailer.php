@@ -4,7 +4,6 @@ namespace Oli\EmailSender\Cron\Adapters;
 
 use Oli\EmailSender\Cron\Config\MailerSettings;
 use Oli\EmailSender\Persistence\Entities\IEmail;
-use Oli\EmailSender\Cron\Exceptions\SendException;
 
 /**
  * Class PHPMailer
@@ -59,17 +58,17 @@ class PHPMailer implements IAdapter
 		{
 			$mailer->addAttachment($attachment);
 		}
-		$mailer->isHTML(true);
+		$mailer->isHTML();
 
 		$mailer->Subject = $email->getSubject();
 		$mailer->Body = $email->getMessage();
 		$mailer->AltBody = 'This is the body in plain text for non-HTML mailer clients';
 		$mailer->CharSet = $this->settings->getCharSet();
 
-		if(!$mailer->send())
-		{
-			throw new SendException($mailer->ErrorInfo);
-		}
+//		if(!$mailer->send())
+//		{
+//			throw new SendException($mailer->ErrorInfo);
+//		}
 	} // send()
 
 }

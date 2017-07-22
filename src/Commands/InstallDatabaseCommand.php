@@ -20,6 +20,7 @@ class InstallDatabaseCommand extends Command
 
 	/**
 	 * In this method setup command, description and its parameters
+	 * @throws \Symfony\Component\Console\Exception\InvalidArgumentException
 	 */
 	protected function configure()
 	{
@@ -60,6 +61,7 @@ class InstallDatabaseCommand extends Command
 			if(!is_file($projectConfigFile))
 			{
 				$output->writeln(sprintf('Project config file at path %s does not exist.', $projectConfigFile));
+
 				return 1;
 			}
 
@@ -85,6 +87,7 @@ class InstallDatabaseCommand extends Command
 		$adapter->install();
 
 		$io->success('Database was prepared.');
+
 		return 0;
 	}
 

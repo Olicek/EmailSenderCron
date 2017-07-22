@@ -21,6 +21,7 @@ final class SendEmailsCommand extends Command
 
 	/**
 	 * In this method setup command, description and its parameters
+	 * @throws \Symfony\Component\Console\Exception\InvalidArgumentException
 	 */
 	protected function configure()
 	{
@@ -55,6 +56,7 @@ final class SendEmailsCommand extends Command
 		$configurator->defaultExtensions = [];
 		$configurator->setDebugMode(true);
 		$configurator->setTempDirectory($tmpDir);
+		$configurator->enableTracy($tmpDir . '/log');
 
 		$configFiles = [$confDir . '/config.neon'];
 

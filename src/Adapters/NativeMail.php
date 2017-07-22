@@ -2,8 +2,8 @@
 
 namespace Oli\EmailSender\Cron\Adapters;
 
-use Oli\EmailSender\Persistence\Entities\IEmail;
 use Oli\EmailSender\Cron\Exceptions\SendException;
+use Oli\EmailSender\Persistence\Entities\IEmail;
 
 /**
  * Class NativeMail
@@ -17,7 +17,7 @@ class NativeMail implements IAdapter
 	{
 		$headers = 'From: ' . $email->getFrom()
 				->getEmail() . "\r\n" . 'Reply-To: ' . $email->getReplyTo()
-					   ->getEmail() . "\r\n" . 'X-Mailer: PHP/' . phpversion();
+					   ->getEmail() . "\r\n" . 'X-Mailer: PHP/' . PHP_VERSION;
 
 		if(!mail(implode(',', $email->getRecipients()), $email->getSubject(), $email->getMessage(), $headers))
 		{
