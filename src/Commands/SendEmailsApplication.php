@@ -1,10 +1,12 @@
 <?php declare(strict_types = 1);
 
 namespace Oli\EmailSender\Cron\Commands;
+use Oli\EmailSender\Cron\Events\EmailEvent;
 use Oli\EmailSender\Cron\IMailer;
 use Oli\EmailSender\Persistence\IPersistEmail;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Tracy\Debugger;
 use Tracy\ILogger;
 
@@ -26,10 +28,16 @@ class SendEmailsApplication
 	 */
 	private $persistEmail;
 
-	public function __construct(IMailer $mailer, IPersistEmail $persistEmail, $name = null)
+	/**
+	 * @var EventDispatcherInterface
+	 */
+	private $eventDispatcher;
+
+	public function __construct(IMailer $mailer, IPersistEmail $persistEmail, $name = null, EventDispatcherInterface $eventDispatcher)
 	{
 		$this->mailer = $mailer;
 		$this->persistEmail = $persistEmail;
+		$this->eventDispatcher = $eventDispatcher;
 	}
 
 	/**
@@ -51,12 +59,15 @@ class SendEmailsApplication
 			{
 				$this->mailer->send($email);
 				$successful++;
+				$listener = SendEmailsCommand::ON_SUCCESSFUL_EMAIL_SEND;
 			}
 			catch (\Throwable $e)
 			{
 				$unsuccessful++;
 				Debugger::log($e, ILogger::EXCEPTION);
+				$listener = SendEmailsCommand::ON_UNSUCCESSFUL_EMAIL_SEND;
 			}
+			$this->eventDispatcher->dispatch($listener, new EmailEvent($email));
 			$progress->advance();
 		}
 

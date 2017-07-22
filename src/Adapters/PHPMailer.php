@@ -3,6 +3,7 @@
 namespace Oli\EmailSender\Cron\Adapters;
 
 use Oli\EmailSender\Cron\Config\MailerSettings;
+use Oli\EmailSender\Cron\Exceptions\SendException;
 use Oli\EmailSender\Persistence\Entities\IEmail;
 
 /**
@@ -37,6 +38,7 @@ class PHPMailer implements IAdapter
 			$mailer->Password = $this->settings->getPassword();
 			$mailer->SMTPSecure = $this->settings->getSmtpSecure();
 			$mailer->Port = $this->settings->getPort();
+			$mailer->Timeout = 5;
 		}
 
 		$mailer->setFrom(
@@ -65,10 +67,10 @@ class PHPMailer implements IAdapter
 		$mailer->AltBody = 'This is the body in plain text for non-HTML mailer clients';
 		$mailer->CharSet = $this->settings->getCharSet();
 
-//		if(!$mailer->send())
-//		{
-//			throw new SendException($mailer->ErrorInfo);
-//		}
+		if(!$mailer->send())
+		{
+			throw new SendException($mailer->ErrorInfo);
+		}
 	} // send()
 
 }

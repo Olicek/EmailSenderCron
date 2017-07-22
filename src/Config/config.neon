@@ -16,3 +16,4 @@ services:
   - Oli\EmailSender\Cron\Adapters\PHPMailer
   - Oli\EmailSender\Cron\Mailer
   - Oli\EmailSender\Cron\Config\MailerSettings(%mailerSettings%)
+  - Symfony\Component\EventDispatcher\EventDispatcher

@@ -3,6 +3,7 @@
 namespace Oli\EmailSender\Cron\Commands;
 
 use Nette\Configurator;
+use Oli\EmailSender\Persistence\Adapters\IDatabaseAdapter;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
@@ -10,6 +11,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Class TestCommand
@@ -19,11 +22,15 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final class SendEmailsCommand extends Command
 {
 
+	public const ON_SUCCESSFUL_EMAIL_SEND = 'onSuccessfulEmailSend';
+
+	public const ON_UNSUCCESSFUL_EMAIL_SEND = 'onUnsuccessfulEmailSend';
+
 	/**
 	 * In this method setup command, description and its parameters
 	 * @throws \Symfony\Component\Console\Exception\InvalidArgumentException
 	 */
-	protected function configure()
+	protected function configure(): void
 	{
 		$this->setName('emails:send');
 		$this->setDescription('Sends emails.');
@@ -40,7 +47,7 @@ final class SendEmailsCommand extends Command
 	 * @throws \Nette\DI\MissingServiceException
 	 * @throws \Nette\InvalidArgumentException
 	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
+	protected function execute(InputInterface $input, OutputInterface $output): ?int
 	{
 		$number = $input->getArgument('number');
 		$projectConfigFile = $input->getOption('configuration');
@@ -84,9 +91,17 @@ final class SendEmailsCommand extends Command
 		$configurator->addParameters($parameters);
 		$container = $configurator->createContainer();
 
+		/** @var SendEmailsApplication $sender */
+		$sender = $container->getByType(IDatabaseAdapter::class);
+
+		/** @var EventDispatcher $dispatcher */
+		$dispatcher = $container->getByType(EventDispatcherInterface::class);
+		$dispatcher->addListener(self::ON_SUCCESSFUL_EMAIL_SEND, [$sender, self::ON_SUCCESSFUL_EMAIL_SEND]);
+		$dispatcher->addListener(self::ON_UNSUCCESSFUL_EMAIL_SEND, [$sender, self::ON_UNSUCCESSFUL_EMAIL_SEND]);
+
 		/** @var SendEmailsApplication $sendEmailsApplication */
 		$sendEmailsApplication = $container->getByType(SendEmailsApplication::class);
-		list($successfulEmails, $unsuccessfulEmails) = $sendEmailsApplication->send($number, $io);
+		[$successfulEmails, $unsuccessfulEmails] = $sendEmailsApplication->send($number, $io);
 
 		$io->text('Number of successfully sent emails: ' . $successfulEmails);
 		if ($unsuccessfulEmails)
